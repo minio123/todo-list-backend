@@ -1,0 +1,397 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.5
+-- Dumped by pg_dump version 17.5
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: error_logs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.error_logs (
+    id integer NOT NULL,
+    user_id integer,
+    activity text NOT NULL,
+    error text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.error_logs OWNER TO postgres;
+
+--
+-- Name: error_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.error_logs_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.error_logs_id_seq OWNER TO postgres;
+
+--
+-- Name: error_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.error_logs_id_seq OWNED BY public.error_logs.id;
+
+
+--
+-- Name: todos; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.todos (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    todo_name character varying(255) NOT NULL,
+    deadline date NOT NULL,
+    status character varying(15) DEFAULT 'Pending'::character varying,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone,
+    todo_id character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.todos OWNER TO postgres;
+
+--
+-- Name: user_accounts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_accounts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email character varying(200) NOT NULL,
+    password text,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone,
+    user_id uuid,
+    login_provider text DEFAULT 'default'::text
+);
+
+
+ALTER TABLE public.user_accounts OWNER TO postgres;
+
+--
+-- Name: user_logs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    activity text NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.user_logs OWNER TO postgres;
+
+--
+-- Name: user_tokens; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    token text NOT NULL,
+    expires_at timestamp with time zone DEFAULT (now() + '30 days'::interval) NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT now(),
+    type text NOT NULL,
+    revoked boolean DEFAULT false,
+    ip_address inet,
+    device_info text,
+    last_used_at timestamp with time zone,
+    user_id uuid
+);
+
+
+ALTER TABLE public.user_tokens OWNER TO postgres;
+
+--
+-- Name: user_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.user_tokens_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.user_tokens_id_seq OWNER TO postgres;
+
+--
+-- Name: user_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.user_tokens_id_seq OWNED BY public.user_tokens.id;
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    firstname character varying(100) NOT NULL,
+    middlename character varying(100),
+    lastname character varying(100) NOT NULL,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone,
+    display_picture text
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- Name: error_logs id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.error_logs ALTER COLUMN id SET DEFAULT nextval('public.error_logs_id_seq'::regclass);
+
+
+--
+-- Data for Name: error_logs; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.error_logs (id, user_id, activity, error, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: todos; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.todos (id, user_id, todo_name, deadline, status, is_active, created_at, updated_at, todo_id) FROM stdin;
+7b385c86-79d1-4340-868e-53c9c8488d3a	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Test todo	2025-09-25	pending	t	2025-09-23 03:40:12.05+08	2025-09-23 03:40:12.05+08	TODO-0001
+9dc3f880-685a-47f2-a8ab-9098dd6827d4	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Todo testing	2025-09-25	pending	f	2025-09-24 03:51:43.765+08	2025-09-24 04:02:18.058+08	TODO-0002
+a40c7096-e5dd-4129-ab08-2df45d50a2d6	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Todo testing	2025-09-25	pending	t	2025-09-24 17:10:10.64+08	2025-09-24 17:10:10.64+08	TODO-0002
+091e4477-a0d7-4ee4-a145-63c3368aba0f	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Todo testing 2	2025-09-25	pending	t	2025-09-24 23:00:52.315+08	2025-09-24 23:00:52.315+08	TODO-0003
+\.
+
+
+--
+-- Data for Name: user_accounts; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.user_accounts (id, email, password, is_active, created_at, updated_at, user_id, login_provider) FROM stdin;
+4af1c76a-2c1f-410e-8f7f-0615a48a3eac	harrypotter@test.com	$2b$10$3goq3dINNQPN.kSXfqCZm.9V1kpxTczTRcUQkCw7gnccNRvHPs37K	t	2025-09-20 15:36:09.814161+08	\N	aed9a83b-f224-41ef-8c32-81d66b5cd1bb	default
+ff40bc49-4dff-459f-9f6f-030375bf6abe	user@test.com	$2b$10$cMpfd2/L.6KaeBlplRCKeuqmW7oaV054C5vLejzapkItdxyQzojLa	t	2025-09-21 11:17:12.312+08	2025-09-21 11:17:12.312+08	fe7960e3-d4d0-468f-b34f-27980b5e5e6d	default
+f136537e-5bf0-4d71-a147-d055d95a833d	johndoe@gmail.com	$2b$10$WI9eJRA07hxvbVisou6Vb.tOGw3mg6.LF6gyjDSjW/6f/0lByAEFa	t	2025-09-20 04:22:06.402732+08	2025-09-21 14:38:48.653+08	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	default
+b2738c15-6037-4ba4-9d92-df4016f60fdc	minioamboni@gmail.com	\N	t	2025-10-02 09:37:48.001+08	2025-10-02 09:37:48.001+08	7c397464-2a9e-49d8-a4c8-538e29612f62	default
+\.
+
+
+--
+-- Data for Name: user_logs; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.user_logs (id, user_id, activity, created_at) FROM stdin;
+bd43a759-5b08-4f6c-a3e3-4cd1f1e997c8	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Created a new todo: Todo testing	2025-09-24 03:51:43.775+08
+d0659c8f-43c6-414f-8376-6a5d34cff05f	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Deleted a todo: Todo testing	2025-09-24 04:02:18.01+08
+52f13446-ba8e-4425-8d77-9eda1a550717	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 04:09:41.145+08
+a63f9483-8818-46f5-a53c-8a7633fc187f	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:07:04.053+08
+ced03302-36e7-40e8-9f36-78d782cca0b4	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:07:58.333+08
+7e111414-109d-4754-b8d7-f2611bce2ece	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:08:56.559+08
+d178273d-fe9e-4bea-b55e-a6ffc9fea9d0	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:13:14.347+08
+4fdb7bcd-0e1b-4816-b604-48cc325081b4	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:14:24.828+08
+6bb45d3a-a73b-4397-85df-eae906edd803	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:14:32.199+08
+47ba3997-332e-49ac-8e0f-53f3c547050c	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:14:39.16+08
+75eaf6d8-a777-4967-b7c8-45468922e089	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:14:55.021+08
+11730543-869b-4d46-87fa-5c5bbfe18727	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Updated user information	2025-09-24 06:15:39.653+08
+8f2b2b25-10d8-4cb6-85d6-363db70e0137	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Created a new todo: Todo testing	2025-09-24 17:10:10.654+08
+ec8629ee-0ffb-4fc5-8fb7-fad9fb1fb8af	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	Created a new todo: Todo testing 2	2025-09-24 23:00:52.332+08
+\.
+
+
+--
+-- Data for Name: user_tokens; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.user_tokens (id, token, expires_at, created_at, updated_at, type, revoked, ip_address, device_info, last_used_at, user_id) FROM stdin;
+525681eb-b6ed-46c7-9dc8-caca2a45f5c2	$2b$10$zEGpiNrzvhMo4K85qaE06upIyhDFTWGuhG4M6A3OBdcX.TW38dd6.	2025-10-27 17:37:23.54+08	2025-09-27 17:37:23.541+08	2025-09-27 17:37:23.541+08	refresh	f	::1	insomnia/11.6.1	\N	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53
+7b5080d6-bf12-420b-b14c-629d88274ab0	$2b$10$Dx4nbHWXviwG5vhvLo4qruyK3qbME91uki05JVyr/l/NpCjbC09H2	2025-11-02 03:41:14.345+08	2025-10-03 03:41:14.346+08	2025-10-03 04:21:21.443+08	refresh	t	::1	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0	\N	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53
+2a4b068c-d655-4379-aa35-04262b132855	$2b$10$FH3H/xiYbcjCrfu/jwoTAO/YmQwSVdwaGIGomZYMKN2jCzpU/mpiq	2025-11-02 04:21:21.606+08	2025-10-03 04:21:21.607+08	2025-10-03 04:21:21.607+08	refresh	f	::1	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0	\N	1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (id, firstname, middlename, lastname, is_active, created_at, updated_at, display_picture) FROM stdin;
+aed9a83b-f224-41ef-8c32-81d66b5cd1bb	Harry		Potter	t	2025-09-20 15:36:09.814161+08	\N	
+fe7960e3-d4d0-468f-b34f-27980b5e5e6d	User		Test	t	2025-09-21 11:17:12.305+08	2025-09-21 11:17:12.305+08	
+1ae3aa0e-ceca-45e8-9bd3-0aacb46e9d53	John	James	Doe	t	2025-09-20 04:22:06.402732+08	2025-09-24 06:15:39.567+08	
+7c397464-2a9e-49d8-a4c8-538e29612f62	minio	\N	amboni	t	2025-10-02 09:37:47.987+08	2025-10-02 09:37:47.987+08	https://lh3.googleusercontent.com/a/ACg8ocLS_aga-HeLBbGb1QrvCUbTkwJn2_e1W6Lop_RvSlhNuwMpTzMw=s96-c
+\.
+
+
+--
+-- Name: error_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.error_logs_id_seq', 1, false);
+
+
+--
+-- Name: user_tokens_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.user_tokens_id_seq', 9, true);
+
+
+--
+-- Name: error_logs error_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.error_logs
+    ADD CONSTRAINT error_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: todos todo_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.todos
+    ADD CONSTRAINT todo_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_accounts user_accounts_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_accounts
+    ADD CONSTRAINT user_accounts_email_key UNIQUE (email);
+
+
+--
+-- Name: user_accounts user_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_accounts
+    ADD CONSTRAINT user_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_logs user_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_logs
+    ADD CONSTRAINT user_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_tokens user_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_tokens
+    ADD CONSTRAINT user_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_user_tokens_token; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX idx_user_tokens_token ON public.user_tokens USING btree (token);
+
+
+--
+-- Name: user_tokens fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_tokens
+    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_accounts fk_user_accounts_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_accounts
+    ADD CONSTRAINT fk_user_accounts_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_logs fk_user_user_logs; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_logs
+    ADD CONSTRAINT fk_user_user_logs FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: todos todos_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.todos
+    ADD CONSTRAINT todos_user FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+

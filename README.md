@@ -1,11 +1,13 @@
-#  Todo-list
+# Todo-list
 
 A full-stack web application built with React, Express, and PostgreSQL. This app allows users to [brief description of what it does—e.g., manage tasks, track inventory, book appointments].
 
 ## Live Demo
 
+[Link of live demo here]
 
-##  GitHub Repository
+## GitHub Repository
+
 https://github.com/minio123/todo-list-backend
 
 ---
@@ -19,8 +21,7 @@ https://github.com/minio123/todo-list-backend
 
 ---
 
-##  Screenshots
-
+## Screenshots
 
 ---
 
@@ -35,8 +36,23 @@ https://github.com/minio123/todo-list-backend
 
 ---
 
+## Database Setup (PostgreSQL)
+
+This app uses PostgreSQL as its relational database. You can set it up locally or use a hosted service like Render.
+
+### Local Setup
+
+1. Make sure PostgreSQL is installed on your machine.
+2. Create a new database:
+   ```bash
+   createdb todo_db
+   ```
+3. psql -U postgres -d todo_db -f /<local_path>/todo-list-backend/config/todo_db.psql
+
 ## Getting Started
 
 ### 1. Clone the repo
+
 ```bash
 git clone https://github.com/minio123/todo-list-backend
+```
