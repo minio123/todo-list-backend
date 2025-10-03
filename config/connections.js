@@ -12,7 +12,7 @@ const sequelize = new Sequelize(env.DB_NAME, env.DB_USER, env.DB_PASSWORD, {
   logging: env.DB_LOGGING === "true" ? console.log : false,
   port: env.DB_PORT,
   pool: {
-    max: 5,
+    max: 20,
     min: 0,
     acquire: 30000,
     idle: 10000,

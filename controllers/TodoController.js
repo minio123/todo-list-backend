@@ -60,8 +60,7 @@ const createTodo = AsyncHandler(async (req, res) => {
         user_id: user_id,
         is_active: true,
       },
-      { transaction: t },
-      { returning: true }
+      { transaction: t, returning: true }
     );
     if (!insert_todo) {
       await t.rollback();

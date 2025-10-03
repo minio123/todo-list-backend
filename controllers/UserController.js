@@ -35,8 +35,7 @@ const createUser = asyncHandler(async (req, res) => {
         lastname: lastname,
         display_picture: displayPicture,
       },
-      { transaction: t },
-      { returning: true }
+      { transaction: t, returning: true }
     );
 
     if (!insert_user) {
@@ -56,8 +55,7 @@ const createUser = asyncHandler(async (req, res) => {
         email: email,
         password: hashedPassword,
       },
-      { transaction: t },
-      { returning: true }
+      { transaction: t, returning: true }
     );
 
     if (!insert_user_account) {

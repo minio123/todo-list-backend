@@ -60,12 +60,12 @@ const googleAuth = ({ clientId, clientSecret, uri }) =>
 
       if (verUser === 0 || !verUser) {
         user_id = await createGoogleUser(googleUser);
-      } else {
-        user_id = verUser.id;
       }
 
-      const accessToken = await generateAccessToken(user_id);
-      const refreshToken = await generateAccessToken(user_id, false);
+      user_id = verUser.user_id;
+
+      const accessToken = await generateAccessToken(req, res, user_id);
+      const refreshToken = await generateRefreshToken(req, res, user_id, false);
 
       if (!accessToken || !refreshToken) {
         const error = new Error("JWT token not generated");
@@ -82,7 +82,6 @@ const googleAuth = ({ clientId, clientSecret, uri }) =>
         email: googleUser.email,
         name: googleUser.name,
         picture: googleUser.picture,
-        token: accessToken,
       };
 
       res.status(200).json({
@@ -101,7 +100,6 @@ const googleAuth = ({ clientId, clientSecret, uri }) =>
   });
 
 const authUser = asyncHandler(async (req, res) => {
-  const t = await sequelize.transaction();
   const { email, password, rememberMe } = req.body;
   const pepper = process.env.AUTH_PEPPER || "default_pepper";
   // const expiresAt = new Date(Date.now() + process.env.JWT_EXPIRES_IN * 1000);
@@ -141,13 +139,23 @@ const authUser = asyncHandler(async (req, res) => {
       });
     }
 
-    const accessToken = await generateAccessToken(res, auth_user.user_id);
+    const accessToken = await generateAccessToken(req, res, auth_user.user_id);
     const refreshToken = await generateRefreshToken(
       req,
       res,
       auth_user.user_id,
       rememberMe
     );
+
+    if (!accessToken || !refreshToken) {
+      const error = new Error("JWT token not generated");
+      await captureError(error, {
+        extra: {
+          action: "controllers/authController.js -> authUser",
+        },
+      });
+      throw error;
+    }
 
     const returnData = {
       user_id: auth_user.user_id,
@@ -163,7 +171,6 @@ const authUser = asyncHandler(async (req, res) => {
       user: returnData,
     });
   } catch (error) {
-    await t.rollback();
     await captureError(error, {
       extra: {
         action: "controllers/authController.js -> authUser",
@@ -174,15 +181,34 @@ const authUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  const t = await sequelize.transaction();
-  // const { id } = req.user;
+  const user_id = req.user;
+
   res.cookie("refreshToken", "", {
     httpOnly: true,
     secure: false,
     sameSite: "strict",
-    path: "/api/auth/refresh",
+    path: "",
     expires: new Date(0),
   });
+
+  res.cookie("accessToken", "", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict",
+    path: "",
+    expires: new Date(0),
+  });
+
+  const revokeToken = await revokeRefreshToken(req, user_id);
+  if (!revokeToken) {
+    const error = new Error("Refresh token not revoked");
+    await captureError(error, {
+      extra: {
+        action: "controllers/authController.js -> logoutUser",
+      },
+    });
+    throw error;
+  }
 
   return res.status(200).json({
     status: "success",
@@ -192,31 +218,51 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const refreshToken = asyncHandler(async (req, res) => {
   const user_id = req.user;
-
   try {
     const revokeToken = await revokeRefreshToken(req, user_id);
     if (!revokeToken) {
       const error = new Error("Refresh token not revoked");
       throw error;
     }
+
     const refreshToken = await generateRefreshToken(req, res, user_id, true);
-    if (!refreshToken) {
-      const error = new Error("Refresh token not generated");
+    const accessToken = await generateAccessToken(req, res, user_id);
+
+    if (!refreshToken || !accessToken) {
+      const error = new Error("Tokens not generated");
       throw error;
     }
 
+    const getUserData = await User.findOne({
+      attributes: [
+        [
+          sequelize.fn(
+            "CONCAT",
+            sequelize.col("firstname"),
+            " ",
+            sequelize.col("lastname")
+          ),
+          "name",
+        ],
+        "display_picture",
+      ],
+      where: {
+        id: user_id,
+        is_active: true,
+      },
+    });
+
     const returnData = {
-      user_id: user_id,
-      token: refreshToken,
+      name: getUserData.dataValues.name,
+      picture: getUserData.display_picture,
     };
 
     return res.status(200).json({
       status: "success",
-      message: "Refresh token generated",
+      message: "User verified",
       user: returnData,
     });
   } catch (error) {
-    await t.rollback();
     captureError(error, {
       extra: {
         action: "controllers/authController.js -> refreshToken",
@@ -224,7 +270,5 @@ const refreshToken = asyncHandler(async (req, res) => {
     });
   }
 });
-const refreshGoogleToken = ({ clientId, clientSecret, uri }) =>
-  asyncHandler(async (req, res) => {});
 
-export { authUser, googleAuth, refreshGoogleToken, logoutUser, refreshToken };
+export { authUser, googleAuth, logoutUser, refreshToken };

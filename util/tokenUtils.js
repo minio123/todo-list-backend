@@ -10,25 +10,22 @@ import { captureError } from "./sentry.js";
 // Models
 import { Token, User, UserAccount } from "../models/index.js";
 
-const generateAccessToken = AsyncHandler(async (res, user_id) => {
+const generateAccessToken = AsyncHandler(async (req, res, user_id) => {
   try {
-    const salt = await bcrypt.genSalt(10);
     const jwtSecret = process.env.JWT_SECRET;
-    const pepper = process.env.AUTH_PEPPER;
 
     const accessToken = jwt.sign({ user_id: user_id }, jwtSecret, {
       expiresIn: "1h",
     });
 
-    // const hashedAccessToken = await bcrypt.hash(accessToken + pepper, salt);
-
-    // if (!hashedAccessToken) {
-    //   const error = new Error("JWT token not hashed");
-    //   await captureError(error, {
-    //     extra: { action: "util/tokenUtils.js -> generateAccessTokenz" },
-    //   });
-    //   return false;
-    // }
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: false,
+      path: "/",
+      domain: "localhost",
+      expires: new Date(Date.now() + 60 * 60 * 1000),
+    });
 
     return accessToken;
   } catch (error) {
@@ -41,6 +38,7 @@ const generateAccessToken = AsyncHandler(async (res, user_id) => {
 
 const verifyAccessToken = AsyncHandler(async (token) => {
   const jwtSecret = process.env.JWT_SECRET;
+
   try {
     const decoded = jwt.verify(token, jwtSecret);
     const user_id = decoded.user_id;
@@ -59,6 +57,12 @@ const verifyAccessToken = AsyncHandler(async (token) => {
     if (!isUserActive) {
       return false;
     }
+
+    // const renewAccessToken = generateAccessToken(user_id);
+
+    // if (!renewAccessToken) {
+    //   return false;
+    // }
 
     return user_id;
   } catch (error) {
@@ -105,8 +109,7 @@ const generateRefreshToken = AsyncHandler(
           ip_address: ip,
           device_info: deviceInfo,
         },
-        { transaction: t },
-        { returning: true }
+        { transaction: t, returning: true }
       );
 
       if (!insert_refresh_token) {
@@ -121,7 +124,7 @@ const generateRefreshToken = AsyncHandler(
       }
 
       res.cookie("refreshToken", refreshToken, {
-        hhttpOnly: true,
+        httpOnly: true,
         sameSite: "strict",
         secure: false,
         path: "/",
@@ -179,15 +182,6 @@ const verifyRefreshToken = AsyncHandler(async (req, refreshToken) => {
       return false;
     }
 
-    const compareToken = await bcrypt.compare(
-      refreshToken + pepper,
-      checkRefreshToken.token
-    );
-
-    if (!compareToken) {
-      return false;
-    }
-
     const isUserActive = await UserAccount.findOne({
       where: {
         user_id: user_id,
@@ -230,6 +224,8 @@ const revokeRefreshToken = AsyncHandler(async (req, user_id) => {
           ip_address: ip,
           device_info: deviceInfo,
         },
+        transaction: t,
+        returning: true,
       }
     );
 

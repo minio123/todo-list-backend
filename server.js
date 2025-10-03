@@ -2,6 +2,7 @@
 import { initSentry } from "./util/sentry.js";
 
 import express from "express";
+import sequelize from "./config/connections.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -58,6 +59,19 @@ app.use("/api/todo", todoRoute());
 Sentry.setupExpressErrorHandler(app);
 app.use(globalErrorHandler);
 
-app.listen(port, host, () => {
+const server = app.listen(port, host, () => {
   console.log(`Running at http://${host}:${port}`);
 });
+
+// Graceful shutdown
+const shutdown = async () => {
+  console.log("Shutting down server...");
+  await sequelize.close();
+  server.close(() => {
+    console.log("Server closed.");
+    process.exit(0);
+  });
+};
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

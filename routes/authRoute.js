@@ -3,6 +3,7 @@ import express from "express";
 import {
   validateAuthInput,
   protectRefresh,
+  protect,
 } from "../middlewares/authMiddleware.js";
 
 // Controller functions
@@ -18,7 +19,7 @@ export default function authRoute({ clientId, clientSecret }) {
 
   router.post("/login", validateAuthInput, authUser);
   router.post("/google/callback", googleAuth({ clientId, clientSecret }));
-  router.post("/logout", logoutUser);
+  router.post("/logout", protect, logoutUser);
   router.post("/refresh", protectRefresh, refreshToken);
 
   return router;

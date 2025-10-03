@@ -1,4 +1,8 @@
-import { verifyAccessToken, verifyRefreshToken } from "../util/tokenUtils.js";
+import {
+  generateAccessToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../util/tokenUtils.js";
 
 // Sentry
 import { captureError } from "../util/sentry.js";
@@ -6,19 +10,38 @@ import { captureError } from "../util/sentry.js";
 const protect = async (req, res, next) => {
   const token = req.cookies.accessToken;
 
-  if (!token) {
-    return res.status(401).json({
-      status: "error",
-      message: "Unauthorized",
-    });
-  }
-
-  const isAuthorized = await verifyAccessToken(token);
+  let isAuthorized = await verifyAccessToken(token);
   if (!isAuthorized) {
-    return res.status(401).json({
-      status: "error",
-      message: "Unauthorized",
-    });
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({
+        status: "error",
+        message: "Unauthorized",
+      });
+    }
+
+    const isRefreshVerified = await verifyRefreshToken(req, refreshToken);
+    if (!isRefreshVerified) {
+      return res.status(401).json({
+        status: "error",
+        message: "Unauthorized",
+      });
+    }
+
+    const issueNewAccessToken = await generateAccessToken(
+      req,
+      res,
+      isRefreshVerified
+    );
+
+    if (!issueNewAccessToken) {
+      return res.status(401).json({
+        status: "error",
+        message: "Unauthorized",
+      });
+    }
+
+    isAuthorized = await verifyAccessToken(issueNewAccessToken);
   }
 
   req.user = isAuthorized;
@@ -28,7 +51,6 @@ const protect = async (req, res, next) => {
 
 const protectRefresh = async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
-
   if (!refreshToken) {
     return res.status(401).json({
       status: "error",

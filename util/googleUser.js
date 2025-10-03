@@ -18,8 +18,7 @@ const createGoogleUser = asyncHandler(async (googleUser) => {
         lastname: googleUser.family_name,
         display_picture: googleUser.picture,
       },
-      { transaction: t },
-      { returning: true }
+      { transaction: t, returning: true }
     );
 
     if (!create_google_user) {

@@ -49,11 +49,17 @@ const listUserLogs = AsyncHandler(async (req, res, next) => {
 const createUserLog = AsyncHandler(async (user_id, activity) => {
   const t = await sequelize.transaction();
   try {
-    await UserLog.create({
-      user_id,
-      activity,
-      is_active: true,
-    });
+    await UserLog.create(
+      {
+        user_id,
+        activity,
+        is_active: true,
+      },
+      {
+        transaction: t,
+        returning: true,
+      }
+    );
 
     await t.commit();
     return true;
