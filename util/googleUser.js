@@ -37,9 +37,9 @@ const createGoogleUser = asyncHandler(async (googleUser) => {
         user_id: create_google_user.id,
         email: googleUser.email,
         password: null,
+        login_provider: "google",
       },
-      { transaction: t },
-      { returning: true }
+      { transaction: t, returning: true }
     );
 
     if (!create_user_account) {

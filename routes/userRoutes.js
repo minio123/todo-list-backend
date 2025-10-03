@@ -11,6 +11,7 @@ import {
 import {
   checkUserExistence,
   checkUpdateUserExistence,
+  checkLoginProvider,
 } from "../middlewares/validateUserMiddleware.js";
 
 import { protect } from "../middlewares/authMiddleware.js";
@@ -27,16 +28,18 @@ export default function userRoute() {
 
   router.post("/create", createUserValidator, checkUserExistence, createUser);
   router.put(
-    "/update/:id",
+    "/update",
     protect,
+    checkLoginProvider,
     updateUserValidator,
     checkUpdateUserExistence,
     updateUser
   );
 
   router.put(
-    "/update/password/:id",
+    "/update/password",
     protect,
+    checkLoginProvider,
     updatePasswordValidator,
     updatePassword
   );

@@ -2,6 +2,9 @@ import asyncHandler from "express-async-handler";
 import { OAuth2Client } from "google-auth-library";
 import bcrypt from "bcrypt";
 
+// Controller
+import { createUserLog } from "./UserLogController.js";
+
 // Model
 import { User, UserAccount } from "../models/index.js";
 
@@ -60,20 +63,21 @@ const googleAuth = ({ clientId, clientSecret, uri }) =>
 
       if (verUser === 0 || !verUser) {
         user_id = await createGoogleUser(googleUser);
+      } else {
+        user_id = verUser.user_id;
       }
-
-      user_id = verUser.user_id;
 
       const accessToken = await generateAccessToken(req, res, user_id);
       const refreshToken = await generateRefreshToken(req, res, user_id, false);
 
       if (!accessToken || !refreshToken) {
         const error = new Error("JWT token not generated");
-        await captureError(error, {
-          extra: {
-            action: "controllers/authController.js -> googleAuth",
-          },
-        });
+        throw error;
+      }
+
+      const createLog = await createUserLog(user_id, "Logged in with Google");
+      if (!createLog) {
+        const error = new Error("User log not inserted to database");
         throw error;
       }
 
@@ -149,11 +153,6 @@ const authUser = asyncHandler(async (req, res) => {
 
     if (!accessToken || !refreshToken) {
       const error = new Error("JWT token not generated");
-      await captureError(error, {
-        extra: {
-          action: "controllers/authController.js -> authUser",
-        },
-      });
       throw error;
     }
 
@@ -164,6 +163,12 @@ const authUser = asyncHandler(async (req, res) => {
       picture: auth_user.User.dataValues.display_picture,
       token: accessToken,
     };
+
+    const createLog = await createUserLog(auth_user.user_id, "User logged in");
+    if (!createLog) {
+      const error = new Error("User log not inserted to database");
+      throw error;
+    }
 
     return res.status(200).json({
       status: "success",
@@ -215,6 +220,13 @@ const logoutUser = asyncHandler(async (req, res) => {
         action: "controllers/authController.js -> logoutUser",
       },
     });
+    throw error;
+  }
+
+  const createLog = await createUserLog(user_id, "User logged out");
+
+  if (!createLog) {
+    const error = new Error("User log not inserted to database");
     throw error;
   }
 
