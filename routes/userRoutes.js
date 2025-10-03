@@ -11,28 +11,35 @@ import {
 import {
   checkUserExistence,
   checkUpdateUserExistence,
-  validateUserInputs,
-  validatePassword,
 } from "../middlewares/validateUserMiddleware.js";
+
+import { protect } from "../middlewares/authMiddleware.js";
+
+// Validators
+import {
+  createUserValidator,
+  updateUserValidator,
+  updatePasswordValidator,
+} from "../validators/userValidator.js";
 
 export default function userRoute() {
   const router = express.Router();
 
-  router.post(
-    "/create",
-    validateUserInputs,
-    validatePassword,
-    checkUserExistence,
-    createUser
-  );
+  router.post("/create", createUserValidator, checkUserExistence, createUser);
   router.put(
     "/update/:id",
-    validateUserInputs,
+    protect,
+    updateUserValidator,
     checkUpdateUserExistence,
     updateUser
   );
 
-  router.put("/update/password/:id", validatePassword, updatePassword);
+  router.put(
+    "/update/password/:id",
+    protect,
+    updatePasswordValidator,
+    updatePassword
+  );
 
   return router;
 }

@@ -1,10 +1,9 @@
 import express from "express";
 // Middleware functions
-import {
-  validateAuthInput,
-  protectRefresh,
-  protect,
-} from "../middlewares/authMiddleware.js";
+import { protectRefresh, protect } from "../middlewares/authMiddleware.js";
+
+// Validators
+import { validateAuthInput } from "../validators/authValidator.js";
 
 // Controller functions
 import {

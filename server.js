@@ -6,6 +6,10 @@ import sequelize from "./config/connections.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import expressValidator from "express-validator";
+
+// Middlewares
 
 import { globalErrorHandler } from "./middlewares/errorHandlerMiddleware.js";
 
@@ -21,9 +25,8 @@ dotenv.config();
 // .env configs
 const env = process.env;
 const node_env = env.NODE_ENV;
-const port = env.HOST_PORT;
-const host = env.HOST;
-const origin = env.ORIGIN;
+const port = env.HOST_PORT || 3000;
+const host = env.HOST || "localhost";
 
 // google auth creds
 const clientId = env.GOOGLE_LOGIN_CLIENT_ID;
@@ -32,16 +35,28 @@ const uri = env.REDIRECT_URI;
 
 // cors config
 const corsOptions = {
-  origin: origin,
-  credentials: true, //access-control-allow-credentials:true
+  origin: (origin, callback) => {
+    if (node_env === "production") {
+      // whitelist your frontend domain
+      const allowedOrigins = [env.ORIGIN];
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    } else {
+      callback(null, true); // allow all in dev
+    }
+  },
+  credentials: true,
 };
 
 const app = express();
-
 // Calling sentry
 const Sentry = initSentry(env.SENTRY_DSN, node_env);
 
 app.set("trust proxy", 1);
+app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -60,7 +75,9 @@ Sentry.setupExpressErrorHandler(app);
 app.use(globalErrorHandler);
 
 const server = app.listen(port, host, () => {
-  console.log(`Running at http://${host}:${port}`);
+  if (node_env != "production") {
+    console.log(`Running at http://${host}:${port}`);
+  }
 });
 
 // Graceful shutdown

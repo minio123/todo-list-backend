@@ -11,6 +11,7 @@ const protect = async (req, res, next) => {
   const token = req.cookies.accessToken;
 
   let isAuthorized = await verifyAccessToken(token);
+
   if (!isAuthorized) {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
@@ -43,7 +44,6 @@ const protect = async (req, res, next) => {
 
     isAuthorized = await verifyAccessToken(issueNewAccessToken);
   }
-
   req.user = isAuthorized;
 
   next();
@@ -78,16 +78,4 @@ const protectRefresh = async (req, res, next) => {
   }
 };
 
-const validateAuthInput = (req, res, next) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({
-      status: "error",
-      message: "Email and password are required",
-    });
-  }
-
-  next();
-};
-
-export { protect, protectRefresh, validateAuthInput };
+export { protect, protectRefresh };

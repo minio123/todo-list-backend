@@ -86,7 +86,7 @@ const createUser = asyncHandler(async (req, res) => {
 
 const updateUser = asyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
-  const { id } = req.params;
+  const user_id = req.user;
   const { firstname, middlename, lastname, displayPicture } = req.body;
 
   try {
@@ -99,7 +99,7 @@ const updateUser = asyncHandler(async (req, res) => {
       },
       {
         where: {
-          id: id,
+          id: user_id,
           is_active: true,
         },
         transaction: t,
@@ -114,7 +114,7 @@ const updateUser = asyncHandler(async (req, res) => {
     }
 
     const logActivity = `Updated user information`;
-    const logCreated = await createUserLog(id, logActivity);
+    const logCreated = await createUserLog(user_id, logActivity);
 
     if (!logCreated) {
       await t.rollback();
@@ -139,7 +139,8 @@ const updateUser = asyncHandler(async (req, res) => {
 
 const updatePassword = asyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
-  const { id } = req.params;
+
+  const user_id = req.user;
   const { password } = req.body;
   try {
     const hashedPassword = await hashPassword(password);
@@ -159,7 +160,7 @@ const updatePassword = asyncHandler(async (req, res) => {
       },
       {
         where: {
-          user_id: id,
+          user_id: user_id,
         },
         transaction: t,
         returning: true,
@@ -178,7 +179,7 @@ const updatePassword = asyncHandler(async (req, res) => {
     }
 
     const logActivity = `Updated user password`;
-    const logCreated = await createUserLog(id, logActivity);
+    const logCreated = await createUserLog(user_id, logActivity);
 
     if (!logCreated) {
       await t.rollback();

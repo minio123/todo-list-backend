@@ -20,11 +20,13 @@ const generateAccessToken = AsyncHandler(async (req, res, user_id) => {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      sameSite: "strict",
-      secure: false,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       path: "/",
-      domain: "localhost",
-      expires: new Date(Date.now() + 60 * 60 * 1000),
+      domain:
+        process.env.NODE_ENV === "production"
+          ? process.env.LIVE_DOMAIN
+          : process.env.DEV_DOMAIN,
     });
 
     return accessToken;
@@ -125,10 +127,13 @@ const generateRefreshToken = AsyncHandler(
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        sameSite: "strict",
-        secure: false,
+        secure: process.env.NODE_ENV === "production" ? true : false,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         path: "/",
-        domain: "localhost",
+        domain:
+          process.env.NODE_ENV === "production"
+            ? process.env.LIVE_DOMAIN
+            : process.env.DEV_DOMAIN,
         expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
       await t.commit();

@@ -7,8 +7,14 @@ import { Op } from "sequelize";
 import { captureError } from "../util/sentry.js";
 
 const listUserLogs = AsyncHandler(async (req, res, next) => {
-  const { user_id } = req.user;
-  const { search = "" } = req.query;
+  const user_id = req.user;
+  const {
+    search = "",
+    page = 1,
+    limit = 25,
+    sort_by = "created_at",
+    sort = "desc",
+  } = req.query;
 
   try {
     const logs = await UserLog.findAll({
@@ -19,6 +25,9 @@ const listUserLogs = AsyncHandler(async (req, res, next) => {
           [Op.like]: `%${search}%`,
         },
       },
+      limit: limit,
+      offset: (page - 1) * limit,
+      order: [[sort_by, sort]],
     });
 
     const totalLogs = await UserLog.count({
@@ -29,12 +38,16 @@ const listUserLogs = AsyncHandler(async (req, res, next) => {
           [Op.like]: `%${search}%`,
         },
       },
+      limit: limit,
+      offset: (page - 1) * limit,
     });
 
     return res.status(200).json({
       status: "success",
       data: logs,
-      totalLogs: totalLogs,
+      totalPages: Math.ceil(totalLogs / limit),
+      currentPage: page,
+      totalItems: totalLogs,
     });
   } catch (error) {
     await captureError(error, {

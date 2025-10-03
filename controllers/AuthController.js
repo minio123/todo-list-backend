@@ -185,17 +185,25 @@ const logoutUser = asyncHandler(async (req, res) => {
 
   res.cookie("refreshToken", "", {
     httpOnly: true,
-    secure: false,
-    sameSite: "strict",
-    path: "",
+    secure: process.env.NODE_ENV === "production" ? true : false,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    path: "/",
+    domain:
+      process.env.NODE_ENV === "production"
+        ? process.env.LIVE_DOMAIN
+        : process.env.DEV_DOMAIN,
     expires: new Date(0),
   });
 
   res.cookie("accessToken", "", {
     httpOnly: true,
-    secure: false,
-    sameSite: "strict",
-    path: "",
+    secure: process.env.NODE_ENV === "production" ? true : false,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    path: "/",
+    domain:
+      process.env.NODE_ENV === "production"
+        ? process.env.LIVE_DOMAIN
+        : process.env.DEV_DOMAIN,
     expires: new Date(0),
   });
 

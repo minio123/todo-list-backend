@@ -1,5 +1,6 @@
 import AsyncHandler from "express-async-handler";
 import sequelize from "../config/connections.js";
+import { Op } from "sequelize";
 
 // Controllers
 import { createUserLog } from "../controllers/UserLogController.js";
@@ -14,17 +15,67 @@ import { captureError } from "../util/sentry.js";
 
 const listTodo = AsyncHandler(async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const user_id = req.user;
+    const {
+      search = "",
+      page = 1,
+      sort_by = "created_at",
+      sort = "desc",
+      limit = 25,
+    } = req.query;
+
+    console.log(limit);
+
     const todos = await Todo.findAll({
-      where: { user_id: user_id, is_active: true },
-    });
-    const todoCount = await Todo.count({
-      where: { user_id: user_id, is_active: true },
+      where: {
+        user_id: user_id,
+        is_active: true,
+        [Op.or]: [
+          {
+            todo_name: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+          {
+            status: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+        ],
+      },
+      limit: limit,
+      offset: (page - 1) * limit,
+      order: [[sort_by, sort]],
     });
 
-    return res
-      .status(200)
-      .json({ status: "success", data: todos, count: todoCount });
+    const todoCount = await Todo.count({
+      where: {
+        user_id: user_id,
+        is_active: true,
+        [Op.or]: [
+          {
+            todo_name: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+          {
+            status: {
+              [Op.iLike]: `%${search}%`,
+            },
+          },
+        ],
+      },
+      limit: limit,
+      offset: (page - 1) * limit,
+    });
+
+    return res.status(200).json({
+      status: "success",
+      data: todos,
+      totalPages: Math.ceil(todoCount / limit),
+      currentPage: page,
+      totalItems: todoCount,
+    });
   } catch (error) {
     await captureError(error, {
       extra: {
@@ -37,7 +88,7 @@ const listTodo = AsyncHandler(async (req, res) => {
 
 const createTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
-  const { user_id } = req.user;
+  const user_id = req.user;
   const { todoName, deadline, status } = req.body;
   try {
     const duplicateTodo = await checkTodo(user_id, todoName);
@@ -101,8 +152,8 @@ const createTodo = AsyncHandler(async (req, res) => {
 
 const updateTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
-  const user_id = req.user.user_id;
-  const { todo_name, status } = req.body;
+  const user_id = req.user;
+  const { todoNname, status, deadline } = req.body;
   const todo_id = req.params.id;
   try {
     const todo = await Todo.findOne({
@@ -119,8 +170,11 @@ const updateTodo = AsyncHandler(async (req, res) => {
         message: "Todo not found",
       });
     }
-    todo.todo_name = todo_name || todo.todo_name;
+    todo.todo_name = todoNname || todo.todo_name;
     todo.status = status || todo.status;
+    todo.deadline = deadline || todo.deadline;
+
+    const todoName = todo.todo_name;
 
     const logActivity = `Updated a todo: ${todoName}`;
     const logCreated = await createUserLog(user_id, logActivity);
@@ -151,7 +205,7 @@ const updateTodo = AsyncHandler(async (req, res) => {
 
 const deleteTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
-  const user_id = req.user.user_id;
+  const user_id = req.user;
   const todo_id = req.params.id;
   try {
     const todo = await Todo.findOne({
