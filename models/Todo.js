@@ -34,6 +34,10 @@ const Todo = sequelize.define(
         key: "id",
       },
     },
+    category: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
