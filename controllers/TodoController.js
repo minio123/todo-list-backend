@@ -22,14 +22,14 @@ const listTodo = AsyncHandler(async (req, res) => {
       sort_by = "created_at",
       sort = "desc",
       limit = 25,
+      category = "personal",
     } = req.query;
-
-    console.log(limit);
 
     const todos = await Todo.findAll({
       where: {
         user_id: user_id,
         is_active: true,
+        category: category,
         [Op.or]: [
           {
             todo_name: {
@@ -52,6 +52,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id: user_id,
         is_active: true,
+        category: category,
         [Op.or]: [
           {
             todo_name: {
@@ -89,9 +90,10 @@ const listTodo = AsyncHandler(async (req, res) => {
 const createTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
-  const { todoName, deadline, status } = req.body;
+  const { todoName, deadline, status, category } = req.body;
+
   try {
-    const duplicateTodo = await checkTodo(user_id, todoName);
+    const duplicateTodo = await checkTodo(user_id, todoName, category);
     if (duplicateTodo) {
       await t.rollback();
       return res.status(400).json({
@@ -108,6 +110,7 @@ const createTodo = AsyncHandler(async (req, res) => {
         todo_id: todo_id,
         deadline: deadline,
         status: status,
+        category: category,
         user_id: user_id,
         is_active: true,
       },
@@ -153,7 +156,7 @@ const createTodo = AsyncHandler(async (req, res) => {
 const updateTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
-  const { todoNname, status, deadline } = req.body;
+  const { todoNname, status, deadline, category } = req.body;
   const todo_id = req.params.id;
   try {
     const todo = await Todo.findOne({
@@ -172,6 +175,7 @@ const updateTodo = AsyncHandler(async (req, res) => {
     }
     todo.todo_name = todoNname || todo.todo_name;
     todo.status = status || todo.status;
+    todo.category = category || todo.category;
     todo.deadline = deadline || todo.deadline;
 
     const todoName = todo.todo_name;
