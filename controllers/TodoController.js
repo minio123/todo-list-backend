@@ -10,7 +10,6 @@ import { Todo } from "../models/index.js";
 
 // Utils
 import { generateTodoId } from "../util/generateTodoId.js";
-import { checkTodo } from "../util/duplicateChecker.js";
 import { captureError } from "../util/sentry.js";
 
 const listTodo = AsyncHandler(async (req, res) => {
@@ -93,15 +92,6 @@ const createTodo = AsyncHandler(async (req, res) => {
   const user_id = req.user;
   const { todoName, deadline, status, category } = req.body;
   try {
-    const duplicateTodo = await checkTodo(user_id, todoName, category);
-    if (duplicateTodo) {
-      await t.rollback();
-      return res.status(400).json({
-        status: "error",
-        message: "Todo with the same name already exists",
-      });
-    }
-
     const todo_id = await generateTodoId(user_id);
 
     const insert_todo = await Todo.create(
