@@ -11,7 +11,7 @@ const checkUser = asyncHandler(async (email) => {
   try {
     const check_query = await UserAccount.findOne({
       where: {
-        email: { [Op.iLike]: email },
+        email: email,
         is_active: true,
       },
     });
@@ -24,13 +24,15 @@ const checkUser = asyncHandler(async (email) => {
   }
 });
 
-const checkUserUpdate = asyncHandler(async (id, email) => {
+const checkUserUpdate = asyncHandler(async (user_id, email) => {
   try {
     const check_query = await UserAccount.findOne({
       where: {
-        email: { [Op.iLike]: email },
+        email: email,
         is_active: true,
-        user_id: { [Op.ne]: id },
+        user_id: {
+          [Op.ne]: user_id,
+        },
       },
     });
 
@@ -51,7 +53,7 @@ const checkTodo = asyncHandler(async (user_id, todoName, category) => {
       where: {
         user_id: user_id,
         category: category,
-        todo_name: { [Op.iLike]: todoName },
+        todo_name: todoName,
         is_active: true,
       },
     });
@@ -67,4 +69,31 @@ const checkTodo = asyncHandler(async (user_id, todoName, category) => {
   }
 });
 
-export { checkUser, checkUserUpdate, checkTodo };
+const checkTodoUpdate = asyncHandler(
+  async (user_id, todoName, category, todo_id) => {
+    try {
+      const check_query = await Todo.findOne({
+        where: {
+          user_id: user_id,
+          category: category,
+          todo_name: todoName,
+          is_active: true,
+          id: {
+            [Op.ne]: todo_id,
+          },
+        },
+      });
+
+      return check_query;
+    } catch (error) {
+      await captureError(error, {
+        extra: {
+          action: "util/duplicateChecker.js -> checkTodoUpdate",
+        },
+      });
+      throw error;
+    }
+  }
+);
+
+export { checkUser, checkUserUpdate, checkTodo, checkTodoUpdate };
