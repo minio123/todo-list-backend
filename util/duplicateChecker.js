@@ -45,11 +45,12 @@ const checkUserUpdate = asyncHandler(async (id, email) => {
   }
 });
 
-const checkTodo = asyncHandler(async (user_id, todoName) => {
+const checkTodo = asyncHandler(async (user_id, todoName, category) => {
   try {
     const check_query = await Todo.findOne({
       where: {
         user_id: user_id,
+        category: category,
         todo_name: { [Op.iLike]: todoName },
         is_active: true,
       },
