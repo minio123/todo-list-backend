@@ -28,6 +28,11 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    timezone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "UTC",
+    },
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

@@ -161,7 +161,6 @@ const authUser = asyncHandler(async (req, res) => {
       email: auth_user.email,
       name: auth_user.User.dataValues.name,
       picture: auth_user.User.dataValues.display_picture,
-      token: accessToken,
     };
 
     const createLog = await createUserLog(auth_user.user_id, "User logged in");

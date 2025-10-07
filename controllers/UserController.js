@@ -13,8 +13,15 @@ import { User, UserAccount } from "../models/index.js";
 
 const createUser = asyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
-  const { firstname, middlename, lastname, email, password, displayPicture } =
-    req.body;
+  const {
+    firstname,
+    middlename,
+    lastname,
+    email,
+    password,
+    displayPicture,
+    timezone,
+  } = req.body;
   try {
     const hashedPassword = await hashPassword(password);
     if (!hashedPassword) {
@@ -34,6 +41,7 @@ const createUser = asyncHandler(async (req, res) => {
         middlename: middlename,
         lastname: lastname,
         display_picture: displayPicture,
+        timezone: timezone,
       },
       { transaction: t, returning: true }
     );
@@ -87,7 +95,8 @@ const createUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
-  const { firstname, middlename, lastname, displayPicture } = req.body;
+  const { firstname, middlename, lastname, displayPicture, timezone } =
+    req.body;
 
   try {
     const [affectedCount, affectedRows] = await User.update(
@@ -96,6 +105,7 @@ const updateUser = asyncHandler(async (req, res) => {
         middlename: middlename,
         lastname: lastname,
         display_picture: displayPicture,
+        timezone: timezone,
       },
       {
         where: {

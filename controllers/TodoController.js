@@ -6,7 +6,7 @@ import { Op } from "sequelize";
 import { createUserLog } from "../controllers/UserLogController.js";
 
 // Models
-import { Todo } from "../models/index.js";
+import { Todo, User } from "../models/index.js";
 
 // Utils
 import { generateTodoId } from "../util/generateTodoId.js";
@@ -24,28 +24,32 @@ const listTodo = AsyncHandler(async (req, res) => {
       limit = 25,
     } = req.query;
 
-    console.log(limit);
+    const searchFilter = search
+      ? {
+          [Op.or]: [
+            { todo_name: { [Op.iLike]: `%${search}%` } },
+            { status: { [Op.iLike]: `%${search}%` } },
+          ],
+        }
+      : {};
 
     const todos = await Todo.findAll({
+      attributes: [
+        "id",
+        "todo_id",
+        "todo_name",
+        "status",
+        "deadline",
+        "category",
+      ],
       where: {
-        user_id: user_id,
+        user_id,
         is_active: true,
-        category: category,
-        [Op.or]: [
-          {
-            todo_name: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-          {
-            status: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-        ],
+        category,
+        ...searchFilter,
       },
-      limit: limit,
-      offset: (page - 1) * limit,
+      limit,
+      offset: page * limit,
       order: [[sort_by, sort]],
     });
 
@@ -53,18 +57,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id: user_id,
         is_active: true,
-        [Op.or]: [
-          {
-            todo_name: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-          {
-            status: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-        ],
+        ...searchFilter,
       },
       limit: limit,
       offset: (page - 1) * limit,
