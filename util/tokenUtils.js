@@ -40,7 +40,6 @@ const generateAccessToken = AsyncHandler(async (req, res, user_id) => {
 
 const verifyAccessToken = AsyncHandler(async (token) => {
   const jwtSecret = process.env.JWT_SECRET;
-
   try {
     const decoded = jwt.verify(token, jwtSecret);
     const user_id = decoded.user_id;
@@ -68,10 +67,7 @@ const verifyAccessToken = AsyncHandler(async (token) => {
 
     return user_id;
   } catch (error) {
-    await captureError(error, {
-      extra: { action: "util/tokenUtils.js -> verifyToken" },
-    });
-    throw error;
+    return false;
   }
 });
 

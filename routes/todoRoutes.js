@@ -7,6 +7,7 @@ import {
   createTodo,
   updateTodo,
   deleteTodo,
+  updateStatus,
 } from "../controllers/TodoController.js";
 
 // Middlewares
@@ -35,6 +36,7 @@ export default function todoRoute() {
     updateTodo
   );
   router.delete("/delete/:id", protect, deleteTodo);
+  router.put("/update-status", protect, updateStatus);
 
   return router;
 }

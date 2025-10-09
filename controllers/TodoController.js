@@ -241,4 +241,51 @@ const deleteTodo = AsyncHandler(async (req, res) => {
   }
 });
 
-export { listTodo, createTodo, updateTodo, deleteTodo };
+const updateStatus = AsyncHandler(async (req, res) => {
+  const t = await sequelize.transaction();
+  const user_id = req.user;
+  const { status, todo_id } = req.body;
+
+  try {
+    todo_id.map(async (id) => {
+      const update = await Todo.update(
+        {
+          status: status,
+        },
+        {
+          where: {
+            id: id,
+            user_id: user_id,
+            is_active: true,
+          },
+        }
+      );
+    });
+
+    if (!update) {
+      await t.rollback();
+      const error = new Error("Todo status not updated");
+      captureError(error, {
+        extra: {
+          action: "controllers/todoController.js -> updateStatus",
+        },
+      });
+      throw error;
+    }
+
+    await t.commit();
+    return res.status(200).json({
+      status: "success",
+      message: "Todo status updated successfully",
+    });
+  } catch (error) {
+    await t.rollback();
+    captureError(error, {
+      extra: {
+        action: "controllers/todoController.js -> updateStatus",
+      },
+    });
+  }
+});
+
+export { listTodo, createTodo, updateTodo, deleteTodo, updateStatus };
