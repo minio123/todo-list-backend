@@ -7,10 +7,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
-import expressValidator from "express-validator";
 
 // Middlewares
-
 import { globalErrorHandler } from "./middlewares/errorHandlerMiddleware.js";
 
 // Routes
@@ -20,6 +18,8 @@ import todoRoute from "./routes/todoRoutes.js";
 
 //Cron jobs
 import cleanUpToken from "./jobs/cleanUpTokens.js";
+import updateStatus from "./jobs/updateTodoStatus.js";
+
 dotenv.config();
 
 // .env configs
@@ -64,6 +64,7 @@ app.use(cookieParser());
 
 // Start cron jobs
 cleanUpToken();
+updateStatus();
 
 // Routes
 app.use("/api/auth", authRoute({ clientId, clientSecret, uri }));
