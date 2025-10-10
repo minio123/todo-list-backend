@@ -9,7 +9,6 @@ import { captureError } from "../util/sentry.js";
 
 const protect = async (req, res, next) => {
   const token = req.cookies.accessToken;
-
   let isAuthorized = await verifyAccessToken(token);
 
   if (!isAuthorized) {

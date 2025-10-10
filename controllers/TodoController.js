@@ -6,17 +6,17 @@ import { Op } from "sequelize";
 import { createUserLog } from "../controllers/UserLogController.js";
 
 // Models
-import { Todo } from "../models/index.js";
+import { Todo, User } from "../models/index.js";
 
 // Utils
 import { generateTodoId } from "../util/generateTodoId.js";
-import { checkTodo } from "../util/duplicateChecker.js";
 import { captureError } from "../util/sentry.js";
 
 const listTodo = AsyncHandler(async (req, res) => {
   try {
     const user_id = req.user;
     const {
+      category = "personal",
       search = "",
       page = 1,
       sort_by = "created_at",
@@ -25,10 +25,31 @@ const listTodo = AsyncHandler(async (req, res) => {
       category = "personal",
     } = req.query;
 
+<<<<<<< HEAD
+=======
+    const searchFilter = search
+      ? {
+          [Op.or]: [
+            { todo_name: { [Op.iLike]: `%${search}%` } },
+            { status: { [Op.iLike]: `%${search}%` } },
+          ],
+        }
+      : {};
+
+>>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
     const todos = await Todo.findAll({
+      attributes: [
+        "id",
+        "todo_id",
+        "todo_name",
+        "status",
+        "deadline",
+        "category",
+      ],
       where: {
-        user_id: user_id,
+        user_id,
         is_active: true,
+<<<<<<< HEAD
         category: category,
         [Op.or]: [
           {
@@ -42,9 +63,13 @@ const listTodo = AsyncHandler(async (req, res) => {
             },
           },
         ],
+=======
+        category,
+        ...searchFilter,
+>>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
       },
-      limit: limit,
-      offset: (page - 1) * limit,
+      limit,
+      offset: page * limit,
       order: [[sort_by, sort]],
     });
 
@@ -52,6 +77,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id: user_id,
         is_active: true,
+<<<<<<< HEAD
         category: category,
         [Op.or]: [
           {
@@ -65,6 +91,9 @@ const listTodo = AsyncHandler(async (req, res) => {
             },
           },
         ],
+=======
+        ...searchFilter,
+>>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
       },
       limit: limit,
       offset: (page - 1) * limit,
@@ -91,6 +120,7 @@ const createTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
   const { todoName, deadline, status, category } = req.body;
+<<<<<<< HEAD
 
   try {
     const duplicateTodo = await checkTodo(user_id, todoName, category);
@@ -102,6 +132,9 @@ const createTodo = AsyncHandler(async (req, res) => {
       });
     }
 
+=======
+  try {
+>>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
     const todo_id = await generateTodoId(user_id);
 
     const insert_todo = await Todo.create(
@@ -258,4 +291,51 @@ const deleteTodo = AsyncHandler(async (req, res) => {
   }
 });
 
-export { listTodo, createTodo, updateTodo, deleteTodo };
+const updateStatus = AsyncHandler(async (req, res) => {
+  const t = await sequelize.transaction();
+  const user_id = req.user;
+  const { status, todo_id } = req.body;
+
+  try {
+    todo_id.map(async (id) => {
+      const update = await Todo.update(
+        {
+          status: status,
+        },
+        {
+          where: {
+            id: id,
+            user_id: user_id,
+            is_active: true,
+          },
+        }
+      );
+    });
+
+    if (!update) {
+      await t.rollback();
+      const error = new Error("Todo status not updated");
+      captureError(error, {
+        extra: {
+          action: "controllers/todoController.js -> updateStatus",
+        },
+      });
+      throw error;
+    }
+
+    await t.commit();
+    return res.status(200).json({
+      status: "success",
+      message: "Todo status updated successfully",
+    });
+  } catch (error) {
+    await t.rollback();
+    captureError(error, {
+      extra: {
+        action: "controllers/todoController.js -> updateStatus",
+      },
+    });
+  }
+});
+
+export { listTodo, createTodo, updateTodo, deleteTodo, updateStatus };
