@@ -26,6 +26,11 @@ const Todo = sequelize.define(
       allowNull: false,
       defaultValue: "pending",
     },
+    category: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "personal",
+    },
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,

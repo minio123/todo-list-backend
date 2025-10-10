@@ -24,14 +24,20 @@ const listTodo = AsyncHandler(async (req, res) => {
       limit = 25,
     } = req.query;
 
-    const searchFilter = search
-      ? {
-          [Op.or]: [
-            { todo_name: { [Op.iLike]: `%${search}%` } },
-            { status: { [Op.iLike]: `%${search}%` } },
-          ],
-        }
-      : {};
+    const searchFilter = {
+      [Op.or]: [
+        {
+          todo_id: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          todo_name: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+      ],
+    };
 
     const todos = await Todo.findAll({
       attributes: [
@@ -84,7 +90,17 @@ const createTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
   const { todoName, deadline, status, category } = req.body;
+
   try {
+    const duplicateTodo = await checkTodo(user_id, todoName, category);
+    if (duplicateTodo) {
+      await t.rollback();
+      return res.status(400).json({
+        status: "error",
+        message: "Todo with the same name already exists",
+      });
+    }
+
     const todo_id = await generateTodoId(user_id);
 
     const insert_todo = await Todo.create(
