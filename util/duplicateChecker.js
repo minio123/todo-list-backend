@@ -52,13 +52,8 @@ const checkTodo = asyncHandler(async (user_id, todoName, category) => {
     const check_query = await Todo.findOne({
       where: {
         user_id: user_id,
-<<<<<<< HEAD
         todo_name: { [Op.iLike]: todoName },
         category: category,
-=======
-        category: category,
-        todo_name: todoName,
->>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
         is_active: true,
       },
     });

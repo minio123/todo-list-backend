@@ -22,21 +22,8 @@ const listTodo = AsyncHandler(async (req, res) => {
       sort_by = "created_at",
       sort = "desc",
       limit = 25,
-      category = "personal",
     } = req.query;
 
-<<<<<<< HEAD
-=======
-    const searchFilter = search
-      ? {
-          [Op.or]: [
-            { todo_name: { [Op.iLike]: `%${search}%` } },
-            { status: { [Op.iLike]: `%${search}%` } },
-          ],
-        }
-      : {};
-
->>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
     const todos = await Todo.findAll({
       attributes: [
         "id",
@@ -49,24 +36,8 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id,
         is_active: true,
-<<<<<<< HEAD
-        category: category,
-        [Op.or]: [
-          {
-            todo_name: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-          {
-            status: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-        ],
-=======
         category,
         ...searchFilter,
->>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
       },
       limit,
       offset: page * limit,
@@ -77,23 +48,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id: user_id,
         is_active: true,
-<<<<<<< HEAD
-        category: category,
-        [Op.or]: [
-          {
-            todo_name: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-          {
-            status: {
-              [Op.iLike]: `%${search}%`,
-            },
-          },
-        ],
-=======
         ...searchFilter,
->>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
       },
       limit: limit,
       offset: (page - 1) * limit,
@@ -120,7 +75,6 @@ const createTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
   const { todoName, deadline, status, category } = req.body;
-<<<<<<< HEAD
 
   try {
     const duplicateTodo = await checkTodo(user_id, todoName, category);
@@ -132,9 +86,6 @@ const createTodo = AsyncHandler(async (req, res) => {
       });
     }
 
-=======
-  try {
->>>>>>> dc230a60d7b283006ec3aae98463e35702fa525d
     const todo_id = await generateTodoId(user_id);
 
     const insert_todo = await Todo.create(
