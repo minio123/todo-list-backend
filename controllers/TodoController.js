@@ -24,6 +24,21 @@ const listTodo = AsyncHandler(async (req, res) => {
       limit = 25,
     } = req.query;
 
+    const searchFilter = {
+      [Op.or]: [
+        {
+          todo_id: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+        {
+          todo_name: {
+            [Op.like]: `%${search}%`,
+          },
+        },
+      ],
+    };
+
     const todos = await Todo.findAll({
       attributes: [
         "id",
