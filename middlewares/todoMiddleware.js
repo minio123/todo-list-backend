@@ -1,5 +1,8 @@
 import asyncHandler from "express-async-handler";
 
+// Sentry
+import { captureError } from "../util/sentry.js";
+
 // Utils
 import { checkTodo, checkTodoUpdate } from "../util/duplicateChecker.js";
 

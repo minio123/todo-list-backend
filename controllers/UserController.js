@@ -11,6 +11,9 @@ import { createUserLog } from "../controllers/UserLogController.js";
 // Models
 import { User, UserAccount } from "../models/index.js";
 
+// Utils
+import { checkUser } from "../util/duplicateChecker.js";
+
 const createUser = asyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const {
@@ -23,6 +26,13 @@ const createUser = asyncHandler(async (req, res) => {
     timezone,
   } = req.body;
   try {
+    const userExists = await checkUser(email);
+    if (userExists) {
+      await t.rollback();
+      const error = new Error("User already exists");
+      throw error;
+    }
+
     const hashedPassword = await hashPassword(password);
     if (!hashedPassword) {
       await t.rollback();
