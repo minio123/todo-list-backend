@@ -11,6 +11,7 @@ import { Todo, User } from "../models/index.js";
 // Utils
 import { generateTodoId } from "../util/generateTodoId.js";
 import { captureError } from "../util/sentry.js";
+import { checkTodo } from "../util/duplicateChecker.js";
 
 const listTodo = AsyncHandler(async (req, res) => {
   try {
@@ -95,7 +96,7 @@ const createTodo = AsyncHandler(async (req, res) => {
     const duplicateTodo = await checkTodo(user_id, todoName, category);
     if (duplicateTodo) {
       await t.rollback();
-      return res.status(400).json({
+      return res.status(409).json({
         status: "error",
         message: "Todo with the same name already exists",
       });
