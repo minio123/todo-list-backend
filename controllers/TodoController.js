@@ -66,8 +66,6 @@ const listTodo = AsyncHandler(async (req, res) => {
         is_active: true,
         ...searchFilter,
       },
-      limit: limit,
-      offset: (page - 1) * limit,
     });
 
     return res.status(200).json({
@@ -156,7 +154,7 @@ const createTodo = AsyncHandler(async (req, res) => {
 const updateTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
-  const { todoNname, status, deadline, category } = req.body;
+  const { todoName, status, deadline, category } = req.body;
   const todo_id = req.params.id;
   try {
     const todo = await Todo.findOne({
@@ -173,12 +171,10 @@ const updateTodo = AsyncHandler(async (req, res) => {
         message: "Todo not found",
       });
     }
-    todo.todo_name = todoNname || todo.todo_name;
+    todo.todo_name = todoName || todo.todo_name;
     todo.status = status || todo.status;
     todo.category = category || todo.category;
     todo.deadline = deadline || todo.deadline;
-
-    const todoName = todo.todo_name;
 
     const logActivity = `Updated a todo: ${todoName}`;
     const logCreated = await createUserLog(user_id, logActivity);
