@@ -9,7 +9,6 @@ import { createUserLog } from "../controllers/UserLogController.js";
 import { Todo, User } from "../models/index.js";
 
 // Utils
-import { generateTodoId } from "../util/generateTodoId.js";
 import { captureError } from "../util/sentry.js";
 import { checkTodo } from "../util/duplicateChecker.js";
 
@@ -28,11 +27,6 @@ const listTodo = AsyncHandler(async (req, res) => {
     const searchFilter = {
       [Op.or]: [
         {
-          todo_id: {
-            [Op.like]: `%${search}%`,
-          },
-        },
-        {
           todo_name: {
             [Op.like]: `%${search}%`,
           },
@@ -41,14 +35,7 @@ const listTodo = AsyncHandler(async (req, res) => {
     };
 
     const todos = await Todo.findAll({
-      attributes: [
-        "id",
-        "todo_id",
-        "todo_name",
-        "status",
-        "deadline",
-        "category",
-      ],
+      attributes: ["id", "todo_name", "status", "deadline", "category"],
       where: {
         user_id,
         is_active: true,
@@ -100,12 +87,9 @@ const createTodo = AsyncHandler(async (req, res) => {
       });
     }
 
-    const todo_id = await generateTodoId(user_id);
-
     const insert_todo = await Todo.create(
       {
         todo_name: todoName,
-        todo_id: todo_id,
         deadline: deadline,
         status: status,
         category: category,
@@ -206,36 +190,53 @@ const updateTodo = AsyncHandler(async (req, res) => {
 const deleteTodo = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
-  const todo_id = req.params.id;
+  const { todo_id } = req.body;
   try {
-    const todo = await Todo.findOne({
-      where: {
-        id: todo_id,
-        user_id: user_id,
-        is_active: true,
+    const delete_todo = await Todo.update(
+      {
+        is_active: false,
       },
-    });
+      {
+        where: {
+          id: { [Op.in]: todo_id },
+          user_id: user_id,
+          is_active: true,
+        },
+        transaction: t,
+        returning: true,
+      }
+    );
 
-    if (!todo) {
+    if (!delete_todo) {
       await t.rollback();
-      return res.status(404).json({
-        status: "error",
-        message: "Todo not found",
+      const error = new Error("Todo not deleted");
+      await captureError(error, {
+        extra: {
+          action: "controllers/todoController.js -> deleteTodo",
+        },
       });
-    }
-
-    const todoName = todo.todo_name;
-
-    const logActivity = `Deleted a todo: ${todoName}`;
-    const logCreated = await createUserLog(user_id, logActivity);
-
-    if (!logCreated) {
-      await t.rollback();
-      const error = new Error("User log not inserted to database");
       throw error;
     }
-    todo.is_active = false;
-    await todo.save({ transaction: t });
+
+    todo_id.map(async (id) => {
+      const todo = await Todo.findOne({
+        where: {
+          id: id,
+          user_id: user_id,
+        },
+      });
+
+      const todoName = todo.todo_name;
+
+      const logActivity = `Deleted a todo: ${todoName}`;
+      const logCreated = await createUserLog(user_id, logActivity);
+
+      if (!logCreated) {
+        await t.rollback();
+        const error = new Error("User log not inserted to database");
+        throw error;
+      }
+    });
 
     await t.commit();
     return res.status(200).json({
@@ -257,34 +258,56 @@ const deleteTodo = AsyncHandler(async (req, res) => {
 const updateStatus = AsyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
-  const { status, todo_id } = req.body;
+  const { todo_id, status } = req.body;
 
   try {
-    todo_id.map(async (id) => {
-      const update = await Todo.update(
-        {
-          status: status,
+    const update_status = await Todo.update(
+      {
+        status: status,
+      },
+      {
+        where: {
+          id: { [Op.in]: todo_id },
+          user_id: user_id,
+          is_active: true,
         },
-        {
-          where: {
-            id: id,
-            user_id: user_id,
-            is_active: true,
-          },
-        }
-      );
-    });
+        transaction: t,
+        returning: true,
+      }
+    );
 
-    if (!update) {
+    if (!update_status) {
       await t.rollback();
       const error = new Error("Todo status not updated");
-      captureError(error, {
+      await captureError(error, {
         extra: {
           action: "controllers/todoController.js -> updateStatus",
         },
       });
       throw error;
     }
+
+    todo_id.map(async (id) => {
+      const todo = await Todo.findOne({
+        where: {
+          id: id,
+          user_id: user_id,
+          is_active: true,
+        },
+      });
+
+      const todoName = todo.todo_name;
+
+      const logActivity = `Updated todo status: ${todoName}`;
+      const logCreated = await createUserLog(user_id, logActivity);
+
+      if (!logCreated) {
+        await t.rollback();
+        const error = new Error("User log not inserted to database");
+        throw error;
+      }
+      todo.is_active = false;
+    });
 
     await t.commit();
     return res.status(200).json({
