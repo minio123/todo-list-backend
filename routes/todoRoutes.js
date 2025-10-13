@@ -35,7 +35,7 @@ export default function todoRoute() {
     validateTodoInput,
     updateTodo
   );
-  router.delete("/delete/:id", protect, deleteTodo);
+  router.delete("/delete", protect, deleteTodo);
   router.put("/update-status", protect, updateStatus);
 
   return router;

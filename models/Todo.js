@@ -13,10 +13,6 @@ const Todo = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    todo_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
     deadline: {
       type: DataTypes.DATE,
       allowNull: false,
