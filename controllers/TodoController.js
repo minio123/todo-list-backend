@@ -39,7 +39,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id,
         is_active: true,
-        category,
+        category: category,
         ...searchFilter,
       },
       limit,
@@ -51,6 +51,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id: user_id,
         is_active: true,
+        category: category,
         ...searchFilter,
       },
     });
