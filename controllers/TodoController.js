@@ -22,6 +22,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       sort_by = "created_at",
       sort = "desc",
       limit = 25,
+      timezone,
     } = req.query;
 
     const searchFilter = {
@@ -39,7 +40,7 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id,
         is_active: true,
-        category,
+        category: category,
         ...searchFilter,
       },
       limit,
@@ -51,10 +52,48 @@ const listTodo = AsyncHandler(async (req, res) => {
       where: {
         user_id: user_id,
         is_active: true,
+        category: category,
         ...searchFilter,
       },
     });
 
+    const newTodos = todos.map((todo) => {
+      const plain = todo.get({ plain: true });
+
+      if (plain.deadline) {
+        const deadlineDate = new Date(plain.deadline);
+        const currentDate = new Date();
+
+        const deadlineOnly = new Date(deadlineDate.toDateString());
+        const currentOnly = new Date(currentDate.toDateString());
+
+        if (deadlineOnly < currentOnly && plain.status !== "completed") {
+          plain.status = "overdue";
+        } else if (deadlineOnly > currentOnly && plain.status !== "completed") {
+          plain.status = "pending";
+        }
+
+        plain.rawDeadline = plain.deadline;
+
+        let date = deadlineDate.toLocaleDateString("en-US", {
+          timeZone: timezone,
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+
+        let time = deadlineDate.toLocaleTimeString("en-US", {
+          timeZone: timezone,
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        plain.deadline = `${date} ${time}`;
+      }
+
+      return plain;
+    });
     return res.status(200).json({
       status: "success",
       data: todos,
