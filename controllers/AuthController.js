@@ -81,11 +81,13 @@ const googleAuth = ({ clientId, clientSecret, uri }) =>
         throw error;
       }
 
+      const picture = googleUser.picture.replace("s96-c", "s0");
+
       const userInfo = {
         user_id: user_id,
         email: googleUser.email,
         name: googleUser.name,
-        picture: googleUser.picture,
+        picture: picture,
       };
 
       res.status(200).json({
@@ -269,11 +271,21 @@ const refreshToken = asyncHandler(async (req, res) => {
         id: user_id,
         is_active: true,
       },
+      include: [
+        {
+          model: UserAccount,
+          attributes: ["email", "login_provider"],
+        },
+      ],
     });
+
+    const picture = getUserData.display_picture.replace("s96-c", "s0");
 
     const returnData = {
       name: getUserData.dataValues.name,
-      picture: getUserData.display_picture,
+      email: getUserData.UserAccount.email,
+      login_provider: getUserData.UserAccount.login_provider,
+      picture: picture,
     };
 
     return res.status(200).json({
