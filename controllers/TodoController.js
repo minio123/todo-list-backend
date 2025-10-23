@@ -69,6 +69,11 @@ const listTodo = AsyncHandler(async (req, res) => {
 
         if (deadlineOnly < currentOnly && plain.status !== "completed") {
           plain.status = "overdue";
+        } else if (
+          deadlineOnly.getTime() === currentOnly.getTime() &&
+          plain.status !== "completed"
+        ) {
+          plain.status = "dueToday";
         } else if (deadlineOnly > currentOnly && plain.status !== "completed") {
           plain.status = "pending";
         }

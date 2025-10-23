@@ -120,6 +120,9 @@ const authUser = asyncHandler(async (req, res) => {
         {
           model: User,
           attributes: [
+            "firstname",
+            "middlename",
+            "lastname",
             [
               sequelize.fn(
                 "CONCAT",
@@ -160,6 +163,9 @@ const authUser = asyncHandler(async (req, res) => {
 
     const returnData = {
       user_id: auth_user.user_id,
+      firstname: auth_user.User.dataValues.firstname,
+      middlename: auth_user.User.dataValues.middlename,
+      lastname: auth_user.User.dataValues.lastname,
       email: auth_user.email,
       name: auth_user.User.dataValues.name,
       picture: auth_user.User.dataValues.display_picture,
@@ -256,6 +262,9 @@ const refreshToken = asyncHandler(async (req, res) => {
 
     const getUserData = await User.findOne({
       attributes: [
+        "firstname",
+        "middlename",
+        "lastname",
         [
           sequelize.fn(
             "CONCAT",
@@ -282,6 +291,9 @@ const refreshToken = asyncHandler(async (req, res) => {
     const picture = getUserData.display_picture.replace("s96-c", "s0");
 
     const returnData = {
+      firstname: getUserData.dataValues.firstname,
+      middlename: getUserData.dataValues.middlename,
+      lastname: getUserData.dataValues.lastname,
       name: getUserData.dataValues.name,
       email: getUserData.UserAccount.email,
       login_provider: getUserData.UserAccount.login_provider,

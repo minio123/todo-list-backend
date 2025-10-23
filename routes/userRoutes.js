@@ -28,11 +28,10 @@ export default function userRoute() {
 
   router.post("/create", createUserValidator, checkUserExistence, createUser);
   router.put(
-    "/update",
+    "/update-profile",
     protect,
     checkLoginProvider,
     updateUserValidator,
-    checkUpdateUserExistence,
     updateUser
   );
 

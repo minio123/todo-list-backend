@@ -46,9 +46,8 @@ export const validatePassword = [
 ];
 
 const validateUserInputs = [
-  body("firstname").notEmpty().withMessage("First name is required"),
-  body("lastname").notEmpty().withMessage("Last name is required"),
-  body("email").isEmail().withMessage("Invalid email format").normalizeEmail(),
+  body("firstName").notEmpty().withMessage("First name is required"),
+  body("lastName").notEmpty().withMessage("Last name is required"),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

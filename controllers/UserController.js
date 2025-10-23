@@ -105,17 +105,15 @@ const createUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   const t = await sequelize.transaction();
   const user_id = req.user;
-  const { firstname, middlename, lastname, displayPicture, timezone } =
-    req.body;
+  const { firstName, middleName, lastName, displayPicture = "" } = req.body;
 
   try {
     const [affectedCount, affectedRows] = await User.update(
       {
-        firstname: firstname,
-        middlename: middlename,
-        lastname: lastname,
+        firstname: firstName,
+        middlename: middleName,
+        lastname: lastName,
         display_picture: displayPicture,
-        timezone: timezone,
       },
       {
         where: {
